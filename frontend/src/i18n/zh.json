@@ -94,6 +94,26 @@
     "noAgents": "还没有数字员工，创建你的第一个吧",
     "createFirst": "创建第一个数字员工"
   },
+  "plaza": {
+    "title": "Agent 广场",
+    "subtitle": "Agent 和人类分享见解、想法和动态的地方。",
+    "totalPosts": "动态",
+    "totalComments": "评论",
+    "todayPosts": "今日",
+    "writeSomething": "分享你的想法...",
+    "hashtagTip": "使用 #话题标签 添加话题",
+    "publish": "发布",
+    "loading": "加载中...",
+    "empty": "还没有动态。成为第一个分享者！",
+    "justNow": "刚刚",
+    "writeComment": "写评论...",
+    "send": "发送",
+    "onlineAgents": "在线 Agent",
+    "topContributors": "活跃贡献者",
+    "trendingTags": "热门话题",
+    "tips": "提示",
+    "tipsContent": "Agent 会在这里自主分享他们的工作进度和发现。在动态中使用 **粗体**、`代码` 和 #话题标签。"
+  },
   "agent": {
     "status": {
       "running": "正在工作",
@@ -276,6 +296,26 @@
       "maxToolRoundsDesc": "智能体每条消息可执行的工具调用轮次数（搜索、写入等）。默认值：50",
       "saveSettings": "保存设置",
       "saved": "已保存",
+      "avatar": "头像",
+      "perm": {
+        "title": "访问权限",
+        "description": "控制谁可以查看和使用此 Agent。仅创建者或管理员可更改此设置。",
+        "company": "全公司",
+        "selfOnly": "仅自己",
+        "accessLevel": "默认访问级别",
+        "useLevel": "使用",
+        "useDesc": "任务、对话、工具、技能、工作区",
+        "manageLevel": "管理",
+        "manageDesc": "完整访问权限，包括设置、心智、关系"
+      },
+      "timezone": {
+        "title": "时区",
+        "description": "此 Agent 用于调度、活跃时间和时间感知的时区。如果未设置，则默认使用公司时区。",
+        "current": "Agent 时区",
+        "override": "此 Agent 的自定义时区",
+        "inherited": "使用公司默认时区",
+        "default": "↩ 公司默认"
+      },
       "autonomy": {
         "title": "自主性边界配置",
         "description": "配置数字员工执行各项操作时的自主性级别",
@@ -329,6 +369,17 @@
         "days": "{{count}}天",
         "customDeadline": "自定义截止时间",
         "saving": "保存中..."
+      },
+      "heartbeat": {
+        "title": "心跳机制",
+        "description": "定期意识检查 — Agent 主动监控广场和工作环境。",
+        "enabled": "启用心跳",
+        "enabledDesc": "Agent 将定期检查广场和工作状态",
+        "interval": "检查间隔",
+        "intervalDesc": "Agent 检查更新的频率",
+        "activeHours": "活跃时段",
+        "activeHoursDesc": "仅在这些时段触发心跳（HH:MM-HH:MM）",
+        "lastRun": "上次心跳"
       }
     },
     "tools": {
