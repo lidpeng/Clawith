@@ -172,6 +172,22 @@ export const agentApi = {
 
     gatewayMessages: (id: string) =>
         request<any[]>(`/agents/${id}/gateway-messages`),
+
+    // Chat sessions
+    listSessions: (agentId: string, scope: 'mine' | 'all' = 'mine') =>
+        request<any[]>(`/agents/${agentId}/sessions?scope=${scope}`),
+
+    createSession: (agentId: string, title?: string) =>
+        request<any>(`/agents/${agentId}/sessions`, {
+            method: 'POST',
+            body: JSON.stringify({ title }),
+        }),
+
+    deleteSession: (agentId: string, sessionId: string) =>
+        request<void>(`/agents/${agentId}/sessions/${sessionId}`, { method: 'DELETE' }),
+
+    getSessionMessages: (agentId: string, sessionId: string) =>
+        request<any[]>(`/agents/${agentId}/sessions/${sessionId}/messages`),
 };
 
 // ─── Tasks ────────────────────────────────────────────

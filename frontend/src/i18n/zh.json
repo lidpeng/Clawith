@@ -440,7 +440,10 @@
   },
   "chat": {
     "placeholder": "输入消息...",
-    "send": "发送"
+    "send": "发送",
+    "deleteSession": "删除会话",
+    "deleteSessionConfirm": "删除会话",
+    "deleteSessionMessage": "确定要删除这个会话吗？此操作无法撤销。"
   },
   "messages": {
     "title": "消息中心",

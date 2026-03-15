@@ -786,6 +786,7 @@ function AgentDetailInner() {
     const [historyMsgs, setHistoryMsgs] = useState<any[]>([]);
     const [sessionsLoading, setSessionsLoading] = useState(false);
     const [agentExpired, setAgentExpired] = useState(false);
+    const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);  // For delete confirmation modal
 
     const fetchMySessions = async (silent = false) => {
         if (!id) return;
@@ -829,6 +830,27 @@ function AgentDetailInner() {
         } catch (err: any) {
             console.error('Failed to create session:', err);
             alert(`Failed to create session: ${err.message || err}`);
+        }
+    };
+
+    const handleDeleteSession = async () => {
+        if (!deleteSessionId || !id) return;
+        try {
+            await agentApi.deleteSession(id, deleteSessionId);
+            // Remove from local state
+            setSessions(prev => prev.filter(s => s.id !== deleteSessionId));
+            setAllSessions(prev => prev.filter(s => s.id !== deleteSessionId));
+            // If deleted session was active, clear it
+            if (activeSession?.id === deleteSessionId) {
+                setActiveSession(null);
+                setChatMessages([]);
+                setHistoryMsgs([]);
+            }
+            setDeleteSessionId(null);
+        } catch (err: any) {
+            console.error('Failed to delete session:', err);
+            alert(`Failed to delete session: ${err.message || err}`);
+            setDeleteSessionId(null);
         }
     };
 
@@ -2839,21 +2861,38 @@ function AgentDetailInner() {
                                             };
                                             const chLabel = channelLabel[s.source_channel];
                                             return (
-                                                <div key={s.id} onClick={() => selectSession(s)}
-                                                    style={{ padding: '8px 12px', cursor: 'pointer', borderLeft: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent', background: isActive ? 'var(--bg-secondary)' : 'transparent', marginBottom: '1px' }}
+                                                <div key={s.id}
+                                                    style={{ padding: '8px 12px', cursor: 'pointer', borderLeft: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent', background: isActive ? 'var(--bg-secondary)' : 'transparent', marginBottom: '1px', position: 'relative' }}
                                                     onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-secondary)'; }}
                                                     onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '2px' }}>
-                                                        <div style={{ fontSize: '12px', fontWeight: isActive ? 600 : 400, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.title}</div>
-                                                        {chLabel && <span style={{ fontSize: '9px', padding: '1px 4px', borderRadius: '3px', background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)', flexShrink: 0 }}>{chLabel}</span>}
+                                                    <div onClick={() => selectSession(s)}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '2px' }}>
+                                                            <div style={{ fontSize: '12px', fontWeight: isActive ? 600 : 400, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.title}</div>
+                                                            {chLabel && <span style={{ fontSize: '9px', padding: '1px 4px', borderRadius: '3px', background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)', flexShrink: 0 }}>{chLabel}</span>}
+                                                        </div>
+                                                        <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            {isOwn && isActive && wsConnected && <span className="status-dot running" style={{ width: '5px', height: '5px', flexShrink: 0 }} />}
+                                                            {s.last_message_at
+                                                                ? new Date(s.last_message_at).toLocaleString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                                                : new Date(s.created_at).toLocaleString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' })}
+                                                            {s.message_count > 0 && <span style={{ marginLeft: 'auto' }}>{s.message_count}</span>}
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                        {isOwn && isActive && wsConnected && <span className="status-dot running" style={{ width: '5px', height: '5px', flexShrink: 0 }} />}
-                                                        {s.last_message_at
-                                                            ? new Date(s.last_message_at).toLocaleString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                                                            : new Date(s.created_at).toLocaleString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' })}
-                                                        {s.message_count > 0 && <span style={{ marginLeft: 'auto' }}>{s.message_count}</span>}
-                                                    </div>
+                                                    {/* Delete button */}
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setDeleteSessionId(s.id); }}
+                                                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', opacity: 0.6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                                                        onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
+                                                        title={t('chat.deleteSession', 'Delete session')}
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                        </svg>
+                                                    </button>
                                                 </div>
                                             );
                                         })
@@ -2879,34 +2918,51 @@ function AgentDetailInner() {
                                                 .map((s: any) => {
                                                     const isActive = activeSession?.id === s.id;
                                                     return (
-                                                        <div key={s.id} onClick={() => selectSession(s)}
-                                                            style={{ padding: '6px 12px', cursor: 'pointer', borderLeft: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent', background: isActive ? 'var(--bg-secondary)' : 'transparent' }}
+                                                        <div key={s.id}
+                                                            style={{ padding: '6px 12px', cursor: 'pointer', borderLeft: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent', background: isActive ? 'var(--bg-secondary)' : 'transparent', position: 'relative' }}
                                                             onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-secondary)'; }}
                                                             onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}>
-                                                                <div style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)', flex: 1 }}>{s.title}</div>
-                                                                {({
-                                                                    feishu: t('common.channels.feishu'),
-                                                                    discord: t('common.channels.discord'),
-                                                                    slack: t('common.channels.slack'),
-                                                                    dingtalk: t('common.channels.dingtalk'),
-                                                                    wecom: t('common.channels.wecom'),
-                                                                } as Record<string, string>)[s.source_channel] && (
-                                                                        <span style={{ fontSize: '9px', padding: '1px 4px', borderRadius: '3px', background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)', flexShrink: 0 }}>
-                                                                            {({
-                                                                                feishu: t('common.channels.feishu'),
-                                                                                discord: t('common.channels.discord'),
-                                                                                slack: t('common.channels.slack'),
-                                                                                dingtalk: t('common.channels.dingtalk'),
-                                                                                wecom: t('common.channels.wecom'),
-                                                                            } as Record<string, string>)[s.source_channel]}
-                                                                        </span>
-                                                                    )}
+                                                            <div onClick={() => selectSession(s)}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}>
+                                                                    <div style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)', flex: 1 }}>{s.title}</div>
+                                                                    {({
+                                                                        feishu: t('common.channels.feishu'),
+                                                                        discord: t('common.channels.discord'),
+                                                                        slack: t('common.channels.slack'),
+                                                                        dingtalk: t('common.channels.dingtalk'),
+                                                                        wecom: t('common.channels.wecom'),
+                                                                    } as Record<string, string>)[s.source_channel] && (
+                                                                            <span style={{ fontSize: '9px', padding: '1px 4px', borderRadius: '3px', background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)', flexShrink: 0 }}>
+                                                                                {({
+                                                                                    feishu: t('common.channels.feishu'),
+                                                                                    discord: t('common.channels.discord'),
+                                                                                    slack: t('common.channels.slack'),
+                                                                                    dingtalk: t('common.channels.dingtalk'),
+                                                                                    wecom: t('common.channels.wecom'),
+                                                                                } as Record<string, string>)[s.source_channel]}
+                                                                            </span>
+                                                                        )}
+                                                                </div>
+                                                                <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', gap: '4px' }}>
+                                                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.username || ''}</span>
+                                                                    <span style={{ flexShrink: 0 }}>{s.last_message_at ? new Date(s.last_message_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}{s.message_count > 0 ? ` · ${s.message_count}` : ''}</span>
+                                                                </div>
                                                             </div>
-                                                            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', gap: '4px' }}>
-                                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.username || ''}</span>
-                                                                <span style={{ flexShrink: 0 }}>{s.last_message_at ? new Date(s.last_message_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}{s.message_count > 0 ? ` · ${s.message_count}` : ''}</span>
-                                                            </div>
+                                                            {/* Delete button */}
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); setDeleteSessionId(s.id); }}
+                                                                style={{ position: 'absolute', top: '6px', right: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', opacity: 0.6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                                                                onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
+                                                                title={t('chat.deleteSession', 'Delete session')}
+                                                            >
+                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                                </svg>
+                                                            </button>
                                                         </div>
                                                     );
                                                 })}
@@ -5102,6 +5158,17 @@ function AgentDetailInner() {
                     </div>
                 )
             }
+
+            {/* Delete session confirmation modal */}
+            {deleteSessionId && (
+                <ConfirmModal
+                    open={!!deleteSessionId}
+                    title={t('chat.deleteSessionConfirm', 'Delete Session')}
+                    message={t('chat.deleteSessionMessage', 'Are you sure you want to delete this session? This action cannot be undone.')}
+                    onConfirm={handleDeleteSession}
+                    onCancel={() => setDeleteSessionId(null)}
+                />
+            )}
 
         </>
     );
