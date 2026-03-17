@@ -320,6 +320,7 @@ export default function AdminCompanies() {
                             <span className={`badge ${c.is_active ? 'badge-success' : 'badge-error'}`} style={{ fontSize: '10px' }}>
                                 {c.is_active ? t('admin.active', 'Active') : t('admin.disabled', 'Disabled')}
                             </span>
+                            {c.slug !== 'default' && (
                             <button
                                 className="btn btn-ghost"
                                 style={{ padding: '2px 6px', fontSize: '10px', color: c.is_active ? 'var(--error)' : 'var(--success)' }}
@@ -327,6 +328,7 @@ export default function AdminCompanies() {
                             >
                                 {c.is_active ? t('admin.disable', 'Disable') : t('admin.enable', 'Enable')}
                             </button>
+                            )}
                         </div>
                     </div>
                 ))}

@@ -167,6 +167,9 @@ async def toggle_company(
     if not tenant:
         raise HTTPException(status_code=404, detail="Company not found")
 
+    if tenant.slug == "default" and tenant.is_active:
+        raise HTTPException(status_code=400, detail="Cannot disable the default company")
+
     new_state = not tenant.is_active
     tenant.is_active = new_state
 
